@@ -16,7 +16,7 @@ func (u Users) New(w http.ResponseWriter, r *http.Request) {
 	var data struct {
 		Email string
 	}
-	// New will be used in get request ,so FormValue will return the "email" value from query string
+	// New will be used in get request ,so FormValue will return the "email" value from query string and not from body parameters
 	data.Email = r.FormValue("email")
 	u.Templates.New.Execute(w, data)
 }
