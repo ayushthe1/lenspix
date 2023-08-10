@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/ayushthe1/lenspix/controllers"
+	"github.com/ayushthe1/lenspix/models"
 	"github.com/ayushthe1/lenspix/templates"
 	"github.com/ayushthe1/lenspix/views"
 	"github.com/go-chi/chi/v5"
@@ -60,10 +61,30 @@ func main() {
 	// tpl = views.Must(views.ParseFS(templates.FS, "signup.gohtml", "tailwind.gohtml"))
 	// r.Get("/signup", controllers.StaticHandler(tpl))
 
-	userC := controllers.Users{}
+	// get the database connection
+	cfg := models.DefaultPostgresConfig()
+	db, err := models.Open(cfg)
+	if err != nil {
+		panic(err)
+	}
+	defer db.Close()
+
+	// Setup our model services
+	userService := models.UserService{
+		DB: db,
+	}
+
+	// Setup our controllers
+	userC := controllers.Users{
+		UserService: &userService,
+	}
 	userC.Templates.New = views.Must(views.ParseFS(templates.FS, "signup.gohtml", "tailwind.gohtml"))
+	userC.Templates.SignIn = views.Must(views.ParseFS(templates.FS, "signin.gohtml", "tailwind.gohtml"))
+
 	r.Get("/signup", userC.New)
+	r.Get("/signin", userC.SignIn)
 	r.Post("/users", userC.Create)
+	r.Post("/signin", userC.ProcessSignIn)
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "page not found", http.StatusNotFound)
