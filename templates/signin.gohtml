@@ -5,6 +5,10 @@
             Welcome Back
         </h1>
         <form action="/signin" method="post">
+        <div class="hidden">
+        {{/* This is a function */}}
+            {{csrfField}} 
+        </div>
             <div class="py-4">
                 <label for="email" class="font-medium text-gray-600">Email Address</label>
                 <input required name="email" id="email" type="email" value="{{.Email}}" placeholer="abc@email.com"

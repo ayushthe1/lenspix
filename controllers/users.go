@@ -20,12 +20,19 @@ type Users struct {
 func (u Users) New(w http.ResponseWriter, r *http.Request) {
 	var data struct {
 		Email string
+		// CSRFField template.HTML
 	}
 	// New will be used in get request ,so FormValue will return the "email" value from query string and not from body parameters
 	data.Email = r.FormValue("email")
 
+	// // give us the HTML for a hidden <input> tag that has the CSRF token for the incoming request.
+	// data.CSRFField = csrf.TemplateField(r)
+
 	// if the emailid is present in url, the signup page will have the email field filled with the emailid
-	u.Templates.New.Execute(w, data)
+	//csrf token will be added to the signup page form
+
+	u.Templates.New.Execute(w, r, data) // data struct will be available inside of our template.
+
 	// template.Execute method is used to fill in the placeholders within a template with actual values and generate the final output. Here we are taking the email_id present as query parameter to fill the email field in the signup page (template) which will be rendered (parsed)
 }
 
@@ -51,8 +58,10 @@ func (u Users) SignIn(w http.ResponseWriter, r *http.Request) {
 		Email string
 	}
 	data.Email = r.FormValue("email")
+
 	// if the emailid is present in url, the signin page will have the email field filled with the emailid
-	u.Templates.SignIn.Execute(w, data)
+
+	u.Templates.SignIn.Execute(w, r, data)
 }
 
 // Handler for processing the sign in form
@@ -71,9 +80,10 @@ func (u Users) ProcessSignIn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cookie := http.Cookie{
-		Name:  "email",
-		Value: user.Email,
-		Path:  "/", // which paths on the server have access to the cookie
+		Name:     "email",
+		Value:    user.Email,
+		Path:     "/",  // which paths on the server have access to the cookie
+		HttpOnly: true, // cookies should be only accessible via http browser request and not javascript request(securing cookies from XSS)
 	}
 	http.SetCookie(w, &cookie)
 

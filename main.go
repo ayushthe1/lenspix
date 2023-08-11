@@ -3,12 +3,14 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/ayushthe1/lenspix/controllers"
 	"github.com/ayushthe1/lenspix/models"
 	"github.com/ayushthe1/lenspix/templates"
 	"github.com/ayushthe1/lenspix/views"
 	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/csrf"
 )
 
 // func executeTemplate(w http.ResponseWriter, filepath string) {
@@ -92,7 +94,25 @@ func main() {
 	})
 
 	fmt.Println("Starting the server on port :3000 ......")
-	http.ListenAndServe(":3000", r)
+
+	csrfKey := "Wc0gT1xfFAjlRwip7l7MmEdjw7DzMXamEHLjyAUP"
+
+	csrfMw := csrf.Protect(
+		[]byte(csrfKey),
+		//TODO: Fix this before deploying
+		csrf.Secure(false),
+	)
+	// Wrapping csrfMw as a middleware around r.
+	http.ListenAndServe(":3000", csrfMw(r))
+}
+
+// timer middleware to know the response time for our requests
+func TimeMiddleware(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		h(w, r)
+		fmt.Println("Request time:", time.Since(start))
+	}
 }
 
 // ServeMux refers to a simple HTTP request multiplexer (or router) provided by the "net/http" package. It acts as a request router, matching incoming HTTP requests to the corresponding handler functions that should process those requests.
