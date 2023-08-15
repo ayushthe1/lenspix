@@ -29,11 +29,5 @@ func String(n int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return base64.URLEncoding.EncodeToString(b), nil
-}
-
-const SessionTokenBytes = 32
-
-func SessionToken() (string, error) {
-	return String(SessionTokenBytes)
+	return base64.URLEncoding.EncodeToString(b), nil // return something like 'Obfmp8X6dQ=='
 }

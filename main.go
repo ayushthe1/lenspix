@@ -76,9 +76,15 @@ func main() {
 		DB: db,
 	}
 
+	// setup our user service
+	sessionService := models.SessionService{
+		DB: db,
+	}
+
 	// Setup our controllers
 	userC := controllers.Users{
-		UserService: &userService,
+		UserService:    &userService,
+		SessionService: &sessionService,
 	}
 	userC.Templates.New = views.Must(views.ParseFS(templates.FS, "signup.gohtml", "tailwind.gohtml"))
 	userC.Templates.SignIn = views.Must(views.ParseFS(templates.FS, "signin.gohtml", "tailwind.gohtml"))
@@ -88,6 +94,7 @@ func main() {
 	r.Post("/users", userC.Create)
 	r.Post("/signin", userC.ProcessSignIn)
 	r.Get("/users/me", userC.CurrentUser)
+	r.Post("/signout", userC.ProcessSignOut)
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "page not found", http.StatusNotFound)
