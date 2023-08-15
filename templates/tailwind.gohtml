@@ -27,6 +27,12 @@
           >
         </div>
         <div>
+          <!-- we are using an HTML form to perform a POST request because browsers don’t support DELETE well, and POST requires a form. When we use an <a> link, these always result in a GET request. Because we need to use a form, we needto include the {{csrfField}}, otherwise our form won’t work. -->
+          <form action="/signout" method="post" class="inline pr-4">
+            <div class="hidden">
+              {{ csrfField }}
+            </div>
+          </form>
           <a class="pr-4" href="/signin">Sign in</a>
           <a
             class="px-4 py-2 bg-pink-900 hover:bg-pink-800 rounded"
