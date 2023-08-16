@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ayushthe1/lenspix/controllers"
+	"github.com/ayushthe1/lenspix/migrations"
 	"github.com/ayushthe1/lenspix/models"
 	"github.com/ayushthe1/lenspix/templates"
 	"github.com/ayushthe1/lenspix/views"
@@ -65,11 +66,20 @@ func main() {
 
 	// get the database connection
 	cfg := models.DefaultPostgresConfig()
+	fmt.Println(cfg.String())
 	db, err := models.Open(cfg)
 	if err != nil {
 		panic(err)
 	}
 	defer db.Close()
+
+	// Run migrations
+	// We no longer need the "migrations" directory variable because our embedding occurs within the migrations directory in fs.go. We can instead pass an empty directory string.
+	err = models.MigrateFS(db, migrations.FS, ".")
+	// our fs.go file is inside the migration folder. So all the files are going to be relative to that. That's why we pass "." which means current directory w.r.t to the fs.go file.
+	if err != nil {
+		panic(err)
+	}
 
 	// Setup our model services
 	userService := models.UserService{

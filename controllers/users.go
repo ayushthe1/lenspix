@@ -122,12 +122,14 @@ func (u Users) CurrentUser(w http.ResponseWriter, r *http.Request) {
 	token, err := readCookie(r, CookieSession)
 	if err != nil {
 		fmt.Println(err)
+		log.Println("Couldn't read token from cookie ..Redirecting to signIn page")
 		http.Redirect(w, r, "/signin", http.StatusFound)
 		return
 	}
 	user, err := u.SessionService.User(token)
 	if err != nil {
 		fmt.Println(err)
+		log.Println("token in cookie isn't valid ..Redirecting to signIn page")
 		http.Redirect(w, r, "/signin", http.StatusFound)
 		return
 	}
