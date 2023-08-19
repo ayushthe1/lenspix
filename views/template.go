@@ -9,6 +9,9 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/ayushthe1/lenspix/context"
+
+	"github.com/ayushthe1/lenspix/models"
 	"github.com/gorilla/csrf"
 )
 
@@ -32,6 +35,30 @@ func Parse(filepath string) (Template, error) {
 	return Template{htmlTpl: tpl}, nil
 }
 
+// Stubbed function for parsing
+func ParseFS(fs fs.FS, patterns ...string) (Template, error) {
+	// define the csrField function before we parse the file
+	tpl := template.New(patterns[0]) // create an empty template.Template
+	tpl = tpl.Funcs(                 // provide our custom placeholder function
+		template.FuncMap{
+			"csrfField": func() (template.HTML, error) {
+				return `<!-- TODO: Implement the csrField -->`, fmt.Errorf("csrfField not implemented")
+			},
+			"currentUser": func() (template.HTML, error) {
+				return "", fmt.Errorf("current user not implemented ")
+			},
+		},
+	)
+
+	tpl, err := tpl.ParseFS(fs, patterns...) // using ParseFS template provided by the standard library
+	if err != nil {
+		return Template{}, fmt.Errorf("parsing template: %w", err)
+	}
+
+	return Template{htmlTpl: tpl}, nil
+}
+
+// Actual function implementation with the request
 func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface{}) {
 
 	tpl, err := t.htmlTpl.Clone() // clone() to avoid race conditions
@@ -41,11 +68,14 @@ func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface
 		return
 	}
 
-	// pass in a new template.FuncMap with the real csrfField implementation
+	// pass in a new template.FuncMap with the real csrfField & currentUser implementation
 	tpl = tpl.Funcs( // provide our custom function
 		template.FuncMap{ // update the placeholder function
 			"csrfField": func() template.HTML {
 				return csrf.TemplateField(r)
+			},
+			"currentUser": func() *models.User {
+				return context.User(r.Context())
 			},
 		},
 	)
@@ -62,23 +92,4 @@ func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface
 	}
 
 	io.Copy(w, &buf)
-}
-
-func ParseFS(fs fs.FS, patterns ...string) (Template, error) {
-	// define the csrField function before we parse the file
-	tpl := template.New(patterns[0]) // create an empty template.Template
-	tpl = tpl.Funcs(                 // provide our custom placeholder function
-		template.FuncMap{
-			"csrfField": func() (template.HTML, error) {
-				return `<!-- TODO: Implement the csrField -->`, fmt.Errorf("csrfField not implemented")
-			},
-		},
-	)
-
-	tpl, err := tpl.ParseFS(fs, patterns...) // using ParseFS template provided by the standard library
-	if err != nil {
-		return Template{}, fmt.Errorf("parsing template: %w", err)
-	}
-
-	return Template{htmlTpl: tpl}, nil
 }
