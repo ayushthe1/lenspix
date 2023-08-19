@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/ayushthe1/lenspix/context"
 	"github.com/ayushthe1/lenspix/models"
 )
 
@@ -40,10 +41,11 @@ func (u Users) New(w http.ResponseWriter, r *http.Request) {
 
 func (u Users) Create(w http.ResponseWriter, r *http.Request) {
 
-	// For GET requests, the server processes the data in the URL's query parameters. For POST requests, the server retrieves the encoded data from the request's body.
+	// NEVER TRY TO WRITE TO RESPONSEWRITER LIKE THIS FOR DEBUGGING AS WE CAN ONLY WRITE TO W ONCE. THESE LINES WILL INTRODUCE A BUG.
+	// fmt.Fprint(w, "Email: ", r.FormValue("email"))
+	// fmt.Fprint(w, "Password: ", r.FormValue("password"))
 
-	fmt.Fprint(w, "Email: ", r.FormValue("email"))
-	fmt.Fprint(w, "Password: ", r.FormValue("password"))
+	// For GET requests, the server processes the data in the URL's query parameters. For POST requests, the server retrieves the encoded data from the request's body.
 
 	email := r.FormValue("email")
 	password := r.FormValue("password")
@@ -119,23 +121,33 @@ func (u Users) ProcessSignIn(w http.ResponseWriter, r *http.Request) {
 // function to take the token store in the cookie and take that to lookup the current user
 // function to take a web request and print the current users information.
 func (u Users) CurrentUser(w http.ResponseWriter, r *http.Request) {
-	token, err := readCookie(r, CookieSession)
-	if err != nil {
-		fmt.Println(err)
-		log.Println("Couldn't read token from cookie ..Redirecting to signIn page")
-		http.Redirect(w, r, "/signin", http.StatusFound)
-		return
-	}
-	user, err := u.SessionService.User(token)
-	if err != nil {
-		fmt.Println(err)
-		log.Println("token in cookie isn't valid ..Redirecting to signIn page")
-		http.Redirect(w, r, "/signin", http.StatusFound)
-		return
-	}
-	fmt.Fprintf(w, "Current user: %s\n", user.Email)
 
-	fmt.Fprintf(w, "Good Luck !")
+	ctx := r.Context()
+	user := context.User(ctx)
+	// We don't technically need to  check if the user is nil bcoz we're assuming that RequireUser() middleware has been run.
+	if user == nil {
+		http.Redirect(w, r, "/signin", http.StatusFound)
+		return
+	}
+	fmt.Fprintf(w, "Cureent user: %s\n", user.Email)
+
+	// token, err := readCookie(r, CookieSession)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	log.Println("Couldn't read token from cookie ..Redirecting to signIn page")
+	// 	http.Redirect(w, r, "/signin", http.StatusFound)
+	// 	return
+	// }
+	// user, err := u.SessionService.User(token)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	log.Println("token in cookie isn't valid ..Redirecting to signIn page")
+	// 	http.Redirect(w, r, "/signin", http.StatusFound)
+	// 	return
+	// }
+	// fmt.Fprintf(w, "Current user: %s\n", user.Email)
+
+	// fmt.Fprintf(w, "Good Luck !")
 }
 
 func (u Users) ProcessSignOut(w http.ResponseWriter, r *http.Request) {
@@ -155,4 +167,53 @@ func (u Users) ProcessSignOut(w http.ResponseWriter, r *http.Request) {
 	// delete the user's cookie
 	deleteCookie(w, CookieSession)
 	http.Redirect(w, r, "/signin", http.StatusFound)
+}
+
+type UserMiddleware struct {
+	SessionService *models.SessionService
+}
+
+// A middleware function to look up a user if one can be found and to store it in the request context . It accepts an http handler as an argument, and returns a new http handler.
+func (umw UserMiddleware) SetUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		// Lookup the session token via the users cookies. If we run into an error reading it, proceed with the request. The goal of this middleware isn't to limit access. It only sets the user in the context if it can.
+		token, err := readCookie(r, CookieSession)
+		if err != nil {
+			// If there isn't a cookie or it can't get it, we will proceed with the request and assume that the user is not logged in.
+			next.ServeHTTP(w, r) // Continue with the wrapped HTTP handler without setting the user.
+			return
+		}
+
+		// Query for a valid session with the token
+		user, err := umw.SessionService.User(token)
+		if err != nil {
+			// Invalid or expired token. In either case we can still proceed, we just cannot set a user.
+			next.ServeHTTP(w, r) // Continue with the wrapped HTTP handler without setting the user.
+			return
+		}
+
+		// Store the user associated with the session in the context
+		// user has been found ,we will get the context ,set the value and then update the request with the new context set
+		ctx := r.Context()
+		ctx = context.WithUser(ctx, user) // updating the context
+		r = r.WithContext(ctx)            // updating the request and get the new request with our updated context
+
+		// Finally we call the handler that our middleware was applied to with the updated request.
+		next.ServeHTTP(w, r) // Continue with the wrapped HTTP handler WITH a user being set.
+	})
+}
+
+//  middleware that requires a user to be signed in, and otherwise redirects them to the sign in page.
+// This middleware assumes that we have already run our SetUser middleware
+func (umw UserMiddleware) RequireUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check to see if a user is present and if they're not present ,redirect them to the signin page
+		user := context.User(r.Context())
+		if user == nil {
+			http.Redirect(w, r, "/signin", http.StatusFound)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
