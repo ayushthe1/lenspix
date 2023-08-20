@@ -11,39 +11,48 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"strconv"
 
 	"github.com/ayushthe1/lenspix/models"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+
+	err := godotenv.Load() // load the env variables from .env variables and make them available to code yhrough os.Getenv()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	host := os.Getenv("SMTP_HOST")
+	portStr := os.Getenv("SMTP_PORT")
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		panic(err)
+	}
+
+	username := os.Getenv("SMTP_USERNAME")
+	password := os.Getenv("SMTP_PASSWORD")
+
 	smptpConfig := models.SMTPConfig{
-		Host:     "sandbox.smtp.mailtrap.io",
-		Port:     25,
-		Username: "5833c25125663f",
-		Password: "d12c48afa4d564",
+		Host:     host,
+		Port:     port,
+		Username: username,
+		Password: password,
 	}
 
 	// Create an emailService
 	emailService := models.NewEmailService(smptpConfig)
 
-	// Define the test message
-	email := models.Email{
-		From:    "ayushsharmaa101@gmail.com",
-		To:      "keshavkumarr07@gmail.com",
-		Subject: "Hello, This is a test email",
-		HTML:    "<h1>Beilive in Yourself</h1>",
-	}
-
 	// send the email
-	err := emailService.Send(email)
+	err = emailService.ForgotPassword("mrbeast@gmail.com", "https://verocios.com")
 	if err != nil {
-		fmt.Printf("Error sending the email : %w", err)
+		fmt.Printf("Error sending the email : %s", err.Error())
+		panic(err)
 	}
 
 	fmt.Println("Email sent successfully !")
 
 }
-
-// Create a emailService
-
-// Send the email
