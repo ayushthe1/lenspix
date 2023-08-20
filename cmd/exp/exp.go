@@ -1,36 +1,36 @@
-package main
+// package main
 
-import (
-	"fmt"
+// import (
+// 	"fmt"
 
-	"github.com/ayushthe1/lenspix/models"
-)
+// 	"github.com/ayushthe1/lenspix/models"
+// )
 
-func main() {
+// func main() {
 
-	cfg := models.DefaultPostgresConfig()
-	db, err := models.Open(cfg)
-	if err != nil {
-		panic(err)
-	}
+// 	cfg := models.DefaultPostgresConfig()
+// 	db, err := models.Open(cfg)
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	defer db.Close()
+// 	defer db.Close()
 
-	// Make sure the database is up and running
-	err = db.Ping()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Connected !")
+// 	// Make sure the database is up and running
+// 	err = db.Ping()
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	fmt.Println("Connected !")
 
-	us := models.UserService{
-		DB: db,
-	}
-	user, err := us.Create("bob@bob.com", "bob123")
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(user)
+// 	us := models.UserService{
+// 		DB: db,
+// 	}
+// 	user, err := us.Create("bob@bob.com", "bob123")
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// 	fmt.Println(user)
 
 	// // Create a table
 	// _, err = db.Exec(`
