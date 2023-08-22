@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 
 	"github.com/ayushthe1/lenspix/context"
 	"github.com/ayushthe1/lenspix/models"
@@ -12,11 +13,15 @@ import (
 type Users struct {
 	Templates struct {
 		// any type can be assigned to the New field, as long as it has all the methods defined by the Template interface
-		New    Template
-		SignIn Template
+		New            Template
+		SignIn         Template
+		ForgotPassword Template
+		CheckYourEmail Template
 	}
-	UserService    *models.UserService
-	SessionService *models.SessionService
+	UserService          *models.UserService
+	SessionService       *models.SessionService
+	PasswordResetService *models.PasswordResetService
+	EmailService         *models.EmailService
 }
 
 // handler function for signup route
@@ -167,6 +172,53 @@ func (u Users) ProcessSignOut(w http.ResponseWriter, r *http.Request) {
 	// delete the user's cookie
 	deleteCookie(w, CookieSession)
 	http.Redirect(w, r, "/signin", http.StatusFound)
+}
+
+// HTTP handler to render the password reset form.
+// Like the sign in form, it can parse any URL query params and use those to prefill the form.
+func (u Users) ForgotPassword(w http.ResponseWriter, r *http.Request) {
+	var data struct {
+		Email string
+	}
+
+	data.Email = r.FormValue("email")              // get the email form url query parameters
+	u.Templates.ForgotPassword.Execute(w, r, data) // prefil the page with email if it exists otherwise empty string is filled in password reset form
+
+}
+
+// handler for processing the forgot password form
+func (u Users) ProcessForgotPassword(w http.ResponseWriter, r *http.Request) {
+	var data struct {
+		Email string
+	}
+
+	data.Email = r.FormValue("email") // get the email from form post request
+
+	// using the password reset service to create a new password reset token
+	pwReset, err := u.PasswordResetService.Create(data.Email)
+	if err != nil {
+		// handle other cases
+		fmt.Println(err)
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	vals := url.Values{
+		"token": {pwReset.Token},
+	}
+	// encode the token in url
+	resetURL := "https://www.lenspix.com/reset-pw?" + vals.Encode()
+
+	// send the mail to the user with the reset_url
+	err = u.EmailService.ForgotPassword(data.Email, resetURL)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	//Render the 'check your email' page
+	u.Templates.CheckYourEmail.Execute(w, r, data)
 }
 
 type UserMiddleware struct {
