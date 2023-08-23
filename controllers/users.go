@@ -17,6 +17,7 @@ type Users struct {
 		SignIn         Template
 		ForgotPassword Template
 		CheckYourEmail Template
+		ResetPassword  Template
 	}
 	UserService          *models.UserService
 	SessionService       *models.SessionService
@@ -220,6 +221,56 @@ func (u Users) ProcessForgotPassword(w http.ResponseWriter, r *http.Request) {
 	//Render the 'check your email' page
 	u.Templates.CheckYourEmail.Execute(w, r, data)
 }
+
+// handler to render the password reset form
+func (u Users) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var data struct {
+		Token string
+	}
+	data.Token = r.FormValue("token") // parsing the token from the URL query parameters. This token will be inserted into the form as a hidden value
+	u.Templates.ResetPassword.Execute(w, r, data)
+}
+
+// handler to process the password reset form
+func (u Users) ProcessResetPassword(w http.ResponseWriter, r *http.Request) {
+	var data struct {
+		Token    string
+		Password string // user's new password they want to update
+	}
+	data.Token = r.FormValue("token")       // token value from form via post request
+	data.Password = r.FormValue("password") // password value from form via post request
+
+	// Attempt to consume the token
+	user, err := u.PasswordResetService.Consume(data.Token)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	// Update the user's password
+	err = u.UserService.UpdatePassword(user.ID, data.Password)
+	if err != nil {
+		http.Error(w, "Something went wromg", http.StatusInternalServerError)
+		return
+	}
+
+	// Sign the user in now that they have reset their password.
+	// Any errors from this point onward should redirect to the sign in page.
+	// Create a new session
+	session, err := u.SessionService.Create(user.ID)
+	if err != nil {
+		fmt.Println(err)
+		http.Redirect(w, r, "/signin", http.StatusFound)
+		return
+	}
+	// sign the user in
+	setCookie(w, CookieSession, session.Token)
+	http.Redirect(w, r, "/users/me", http.StatusFound)
+
+}
+
+// Defining all the middlewares
 
 type UserMiddleware struct {
 	SessionService *models.SessionService
