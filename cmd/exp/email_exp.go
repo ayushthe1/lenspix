@@ -1,12 +1,3 @@
-// Host:
-// sandbox.smtp.mailtrap.io
-// Port:
-// 25 or 465 or 587 or 2525
-// Username:
-// 5833c25125663f
-// Password:
-// d12c48afa4d564
-
 package main
 
 import (
@@ -21,7 +12,7 @@ import (
 
 func main() {
 
-	err := godotenv.Load() // load the env variables from .env variables and make them available to code yhrough os.Getenv()
+	err := godotenv.Load() // load the env variables from .env file and make them available to code through os.Getenv()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}

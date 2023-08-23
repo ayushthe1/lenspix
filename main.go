@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/ayushthe1/lenspix/controllers"
@@ -12,6 +14,7 @@ import (
 	"github.com/ayushthe1/lenspix/views"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/csrf"
+	"github.com/joho/godotenv"
 )
 
 // func executeTemplate(w http.ResponseWriter, filepath string) {
@@ -45,12 +48,57 @@ import (
 // 	}
 // }
 
+type config struct {
+	PSQL models.PostgresConfig
+	SMTP models.SMTPConfig
+	CSRF struct {
+		Key    string
+		Secure bool
+	}
+	Server struct {
+		Address string
+	}
+}
+
+func loadEnvConfig() (config, error) {
+	var cfg config
+	err := godotenv.Load()
+	if err != nil {
+		return cfg, err
+	}
+	//TODO: Read PSQL from an env variable
+	cfg.PSQL = models.DefaultPostgresConfig()
+	//TODO: Read SMTP from an env variable
+	cfg.SMTP.Host = os.Getenv("SMTP_HOST")
+	portStr := os.Getenv("SMTP_PORT")
+
+	cfg.SMTP.Port, err = strconv.Atoi(portStr)
+	if err != nil {
+		return cfg, err
+	}
+
+	cfg.SMTP.Username = os.Getenv("SMTP_USERNAME")
+	cfg.SMTP.Password = os.Getenv("SMTP_PASSWORD")
+
+	//TODO: Read the CSRF values from an env variable
+	cfg.CSRF.Key = "Wc0gT1xfFAjlRwip7l7MmEdjw7DzMXamEHLjyAUP"
+	cfg.CSRF.Secure = false
+
+	//TODO: Read the server values from an Env variable
+	cfg.Server.Address = ":3000"
+
+	return cfg, nil
+}
+
 func main() {
 
+	cfg, err := loadEnvConfig()
+	if err != nil {
+		panic(err)
+	}
+
 	// Setup the database connection
-	cfg := models.DefaultPostgresConfig()
-	fmt.Println(cfg.String())
-	db, err := models.Open(cfg)
+	db, err := models.Open(cfg.PSQL)
 	if err != nil {
 		panic(err)
 	}
@@ -66,32 +114,52 @@ func main() {
 
 	// Setup services
 	// Setup our model services
-	userService := models.UserService{
+	userService := &models.UserService{
 		DB: db,
 	}
 	// setup our user service
-	sessionService := models.SessionService{
+	sessionService := &models.SessionService{
 		DB: db,
 	}
+	// setup password reset service
+	pwResetService := &models.PasswordResetService{
+		DB: db,
+	}
+	// setup email service
+	emailService := models.NewEmailService(cfg.SMTP)
 
 	// Setup middleware
 	umw := controllers.UserMiddleware{
-		SessionService: &sessionService,
+		SessionService: sessionService,
 	}
-	csrfKey := "Wc0gT1xfFAjlRwip7l7MmEdjw7DzMXamEHLjyAUP"
+
 	csrfMw := csrf.Protect(
-		[]byte(csrfKey),
+		[]byte(cfg.CSRF.Key),
 		//TODO: Fix this before deploying
-		csrf.Secure(false),
+		csrf.Secure(cfg.CSRF.Secure),
 	)
 
 	// Setup controllers
 	userC := controllers.Users{
-		UserService:    &userService,
-		SessionService: &sessionService,
+		UserService:          userService,
+		SessionService:       sessionService,
+		PasswordResetService: pwResetService,
+		EmailService:         emailService,
 	}
 	userC.Templates.New = views.Must(views.ParseFS(templates.FS, "signup.gohtml", "tailwind.gohtml"))
 	userC.Templates.SignIn = views.Must(views.ParseFS(templates.FS, "signin.gohtml", "tailwind.gohtml"))
+	userC.Templates.ForgotPassword = views.Must(views.ParseFS(
+		templates.FS,
+		"forgot-pw.gohtml", "tailwind.gohtml",
+	))
+	userC.Templates.CheckYourEmail = views.Must(views.ParseFS(
+		templates.FS,
+		"check-your-email.gohtml", "tailwind.gohtml",
+	))
+	userC.Templates.ResetPassword = views.Must(views.ParseFS(
+		templates.FS,
+		"reset-pw.gohtml", "tailwind.gohtml",
+	))
 
 	// Setup our router and routes
 
@@ -121,7 +189,11 @@ func main() {
 	r.Post("/signup", userC.Create)
 	r.Post("/signin", userC.ProcessSignIn)
 	r.Post("/signout", userC.ProcessSignOut)
+	r.Get("/forgot-pw", userC.ForgotPassword)
+	r.Post("/forgot-pw", userC.ProcessForgotPassword)
 	r.Get("/users/me", userC.CurrentUser)
+	r.Get("/reset-pw", userC.ResetPassword)
+	r.Post("/reset-pw", userC.ProcessResetPassword)
 	// r.Get("/users/me", userC.CurrentUser) --> before
 
 	// Apply the router to all routes that match the prefix 'users/me'
@@ -139,8 +211,11 @@ func main() {
 	})
 
 	// Wrapping csrfMw as a middleware around r and starting the server
-	fmt.Println("Starting the server on port :3000 ......")
-	http.ListenAndServe(":3000", r)
+	fmt.Printf("Starting the server on port :%s ......", cfg.Server.Address)
+	err = http.ListenAndServe(cfg.Server.Address, r)
+	if err != nil {
+		panic(err)
+	}
 	// http.ListenAndServe(":3000", csrfMw(umw.SetUser(r)))
 	// In this code we are wrapping the router with the middleware that sets a user, then we wrap that whole http handler with the CSRF middleware. This means CSRF protection will run first, then our user lookup, and finally our router will decide what HTTP handler to use based on the path and HTTP method. The order of these can be important.
 }
