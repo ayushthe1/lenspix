@@ -53,12 +53,17 @@ func (u Users) Create(w http.ResponseWriter, r *http.Request) {
 
 	// For GET requests, the server processes the data in the URL's query parameters. For POST requests, the server retrieves the encoded data from the request's body.
 
-	email := r.FormValue("email")
-	password := r.FormValue("password")
-	user, err := u.UserService.Create(email, password)
+	var data struct {
+		Email    string
+		Password string
+	}
+
+	data.Email = r.FormValue("email")
+	data.Password = r.FormValue("password")
+	user, err := u.UserService.Create(data.Email, data.Password)
 	if err != nil {
-		fmt.Println(err)
-		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		// if we have an error ,we will execute the signup template ,and render it with passed in data
+		u.Templates.New.Execute(w, r, data, err)
 		return
 	}
 	log.Printf("User created: %+v", user)
