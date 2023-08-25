@@ -27,7 +27,7 @@
           >
         </div>
         <div>
-        {{if currentUser}}
+          {{if currentUser}}
           <!-- we are using an HTML form to perform a POST request because browsers don’t support DELETE well, and POST requires a form. When we use an <a> link, these always result in a GET request. Because we need to use a form, we needto include the {{csrfField}}, otherwise our form won’t work. -->
           <form action="/signout" method="post" class="inline pr-4">
             <div class="hidden">
@@ -35,22 +35,59 @@
             </div>
             <button type="submit">signout</button>
           </form>
-        {{else}}
+          {{else}}
           <a class="pr-4" href="/signin">Sign in</a>
           <a
             class="px-4 py-2 bg-pink-900 hover:bg-pink-800 rounded"
             href="/signup"
             >Sign up</a
           >
-          {{end}}
+          {{ end }}
         </div>
       </nav>
     </header>
+    {{if errors}}
+    <div class="py-4 px-2">
+      {{range errors}}
+      <!-- Add the closeable class here -->
+      <div
+        class="closeable flex bg-red-100 rounded px-2 py-2 text-red-800 mb-2"
+      >
+        <div class="flex-grow">
+          {{.}}
+        </div>
+        <!-- Add the onclick here -->
+        <a href="#" onclick="closeAlert(event)">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke-width="1.5"
+            stroke="currentColor"
+            class="w-6 h-6"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </a>
+      </div>
+      {{ end }}
+    </div>
     {{ end }}
 
     <!-- Each pages content goes here -->
 
     {{define "footer"}}
+    <script>
+      function closeAlert(event) {
+        let closeable = event.target.closest(".closeable");
+        closeable.remove();
+        // closeable.classList.add("hidden");
+      }
+    </script>
   </body>
 </html>
 {{ end }}
