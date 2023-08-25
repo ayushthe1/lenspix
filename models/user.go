@@ -2,10 +2,17 @@ package models
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgerrcode"
 	"golang.org/x/crypto/bcrypt"
+)
+
+var (
+	ErrEmailTaken = errors.New("models: email address is already in use")
 )
 
 type User struct {
@@ -42,6 +49,20 @@ func (us *UserService) Create(email, password string) (*User, error) {
 
 	err = row.Scan(&user.ID)
 	if err != nil {
+		// see if we can use this error as a PgError
+		var pgError *pgconn.PgError
+
+		// pgError is a pointer, but we still need to pass in a pointer to that pointer to errors.As
+		if errors.As(err, &pgError) {
+			// This is a PgError, so see if it matches a unique violation.
+			if pgError.Code == pgerrcode.UniqueViolation { // UniqueViolation is an error thrown by the when a user attempts to insert a duplicate key value in SQL or SQL-like databases.
+
+				// If this is true, it has to be an email violation since this is the
+				// only way to trigger this type of violation with our SQL.
+				return nil, ErrEmailTaken
+			}
+		}
+
 		return nil, fmt.Errorf("create user: %w", err)
 	}
 
