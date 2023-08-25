@@ -7,6 +7,7 @@ import (
 	"net/url"
 
 	"github.com/ayushthe1/lenspix/context"
+	"github.com/ayushthe1/lenspix/errors"
 	"github.com/ayushthe1/lenspix/models"
 )
 
@@ -62,7 +63,10 @@ func (u Users) Create(w http.ResponseWriter, r *http.Request) {
 	data.Password = r.FormValue("password")
 	user, err := u.UserService.Create(data.Email, data.Password)
 	if err != nil {
-		// if we have an error ,we will execute the signup template ,and render it with passed in data
+		if errors.Is(err, models.ErrEmailTaken) {
+			err = errors.Public(err, "That email address is already associated with an account.")
+		}
+		//  execute the signup template ,and render it with passed in data
 		u.Templates.New.Execute(w, r, data, err)
 		return
 	}
