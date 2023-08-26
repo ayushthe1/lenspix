@@ -9,6 +9,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"path/filepath"
 
 	"github.com/ayushthe1/lenspix/context"
 
@@ -43,8 +44,8 @@ func Parse(filepath string) (Template, error) {
 // Stubbed function for parsing
 func ParseFS(fs fs.FS, patterns ...string) (Template, error) {
 	// define the csrField function before we parse the file
-	tpl := template.New(patterns[0]) // create an empty template.Template
-	tpl = tpl.Funcs(                 // provide our custom placeholder function
+	tpl := template.New(filepath.Base(patterns[0])) // create an empty template.Template
+	tpl = tpl.Funcs(                                // provide our custom placeholder function
 		template.FuncMap{
 			"csrfField": func() (template.HTML, error) {
 				return `<!-- TODO: Implement the csrField -->`, fmt.Errorf("csrfField not implemented")
@@ -106,6 +107,7 @@ func (t Template) Execute(w http.ResponseWriter, r *http.Request, data interface
 		return
 	}
 
+	// contents of the buffer is copied to the responseWriter
 	io.Copy(w, &buf)
 }
 
