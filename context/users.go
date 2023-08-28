@@ -22,7 +22,7 @@ func WithUser(ctx context.Context, user *models.User) context.Context {
 func User(ctx context.Context) *models.User {
 	val := ctx.Value(userKey)
 
-	// assert the val as user type
+	// type assertion to check whether the value val is of type *models.User
 	user, ok := val.(*models.User)
 	if !ok {
 		// The most likely case is that nothing was ever stored in the context,
