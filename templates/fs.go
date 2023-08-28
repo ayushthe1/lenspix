@@ -6,5 +6,5 @@ import "embed"
 
 // FS is a file system here provided by the embed and this is going to be embedded into our binary
 
-//go:embed *.gohtml
+//go:embed *.gohtml galleries/*.gohtml
 var FS embed.FS

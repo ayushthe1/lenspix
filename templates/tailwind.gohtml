@@ -13,7 +13,7 @@
     <header class="bg-gradient-to-r from-pink-900 to-indigo-800 text-white">
       <nav class="px-8 py-6 flex items-center text-white">
         <div class="text-4xl pr-19 font-serif">LensPix</div>
-        <div class="flex-grow">
+        <div class="">
           <a class="text-lg font-medium hover:text-blue-100 pr-8 pl-8" href="/"
             >Home</a
           >
@@ -26,6 +26,17 @@
             >FAQ</a
           >
         </div>
+        {{if currentUser}}
+        <div class="flex-grow flex flex-row-reverse">
+          <a
+            class="text-lg font-semibold hover:text-blue-100 pr-8"
+            href="/galleries"
+            >My Galleries</a
+          >
+        </div>
+        {{else}}
+        <div class="flex-grow"></div>
+        {{ end }}
         <div>
           {{if currentUser}}
           <!-- we are using an HTML form to perform a POST request because browsers don’t support DELETE well, and POST requires a form. When we use an <a> link, these always result in a GET request. Because we need to use a form, we needto include the {{csrfField}}, otherwise our form won’t work. -->
