@@ -127,6 +127,10 @@ func main() {
 	}
 	// setup email service
 	emailService := models.NewEmailService(cfg.SMTP)
+	// setup gallery service
+	galleryService := &models.GalleryService{
+		DB: db,
+	}
 
 	// Setup middleware
 	umw := controllers.UserMiddleware{
@@ -135,8 +139,10 @@ func main() {
 
 	csrfMw := csrf.Protect(
 		[]byte(cfg.CSRF.Key),
-		//TODO: Fix this before deploying
 		csrf.Secure(cfg.CSRF.Secure),
+		// By default, the CSRF library sets the path attribute based on the current URL.
+		// To make the CSRF cookie work, on every page regardless of what the current path is ,csrf should always use the path "/"
+		csrf.Path("/"),
 	)
 
 	// Setup controllers
@@ -159,6 +165,22 @@ func main() {
 	userC.Templates.ResetPassword = views.Must(views.ParseFS(
 		templates.FS,
 		"reset-pw.gohtml", "tailwind.gohtml",
+	))
+
+	galleriesC := controllers.Galleries{
+		GalleryService: galleryService,
+	}
+	galleriesC.Templates.New = views.Must(views.ParseFS(
+		templates.FS,
+		"galleries/new.gohtml", "tailwind.gohtml",
+	))
+	galleriesC.Templates.Edit = views.Must(views.ParseFS(
+		templates.FS,
+		"galleries/edit.gohtml", "tailwind.gohtml",
+	))
+	galleriesC.Templates.Index = views.Must(views.ParseFS(
+		templates.FS,
+		"galleries/index.gohtml", "tailwind.gohtml",
 	))
 
 	// Setup our router and routes
@@ -204,6 +226,20 @@ func main() {
 		r.Get("/hello", func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprint(w, "Hellooo")
 		})
+	})
+
+	r.Route("/galleries", func(r chi.Router) {
+		r.Get("/{id}", galleriesC.Show) // This route will be outside the Group because we don’t want it to require a user
+		r.Group(func(r chi.Router) {
+			// This middleware will apply on these group of routes
+			r.Use(umw.RequireUser) // middleware to ensure only signed in user can access this page
+			r.Get("/new", galleriesC.New)
+			r.Get("/{id}/edit", galleriesC.Edit)
+			r.Post("/{id}", galleriesC.Update)
+			r.Post("/", galleriesC.Create)
+			r.Get("/", galleriesC.Index)
+		})
+
 	})
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
