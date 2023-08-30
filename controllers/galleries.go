@@ -59,29 +59,15 @@ func (g Galleries) Create(w http.ResponseWriter, r *http.Request) {
 
 // Method(handler) to render the page(form) to edit gallery
 func (g Galleries) Edit(w http.ResponseWriter, r *http.Request) {
-	// get the gallery id from the url query parameter
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+
+	gallery, err := g.galleryByID(w, r)
 	if err != nil {
-		// 404 - page not found
-		http.Error(w, "Invalid Id", http.StatusNotFound)
 		return
 	}
 
-	// look up the gallery with the valid id
-	gallery, err := g.GalleryService.ByID(id)
+	// check if the user has the access to edit this gallery
+	err = userMustOwnGallery(w, r, gallery)
 	if err != nil {
-		if errors.Is(err, models.ErrNotFound) {
-			http.Error(w, "Galleries not found", http.StatusNotFound)
-			return
-		}
-		http.Error(w, "Something went wrong", http.StatusInternalServerError)
-		return
-	}
-
-	// Check if the gallery belongs to the user who is trying to edit it
-	user := context.User(r.Context())
-	if gallery.UserID != user.ID {
-		http.Error(w, "You are nopt authorizede to edit this gallery", http.StatusForbidden)
 		return
 	}
 
@@ -98,27 +84,15 @@ func (g Galleries) Edit(w http.ResponseWriter, r *http.Request) {
 
 // Method(handler) to process the edit gallery form (once the update button is clicked)
 func (g Galleries) Update(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+
+	gallery, err := g.galleryByID(w, r)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusNotFound)
 		return
 	}
 
-	// query for the gallery with the valid id
-	gallery, err := g.GalleryService.ByID(id)
+	// check if the user has the access to edit this gallery
+	err = userMustOwnGallery(w, r, gallery)
 	if err != nil {
-		if errors.Is(err, models.ErrNotFound) {
-			http.Error(w, "Galleries not found", http.StatusNotFound)
-			return
-		}
-		http.Error(w, "Something went wrong", http.StatusInternalServerError)
-		return
-	}
-
-	// user has the access to edit this gallery
-	user := context.User(r.Context())
-	if gallery.UserID != user.ID {
-		http.Error(w, "You are not authorized to edit this gallery", http.StatusForbidden)
 		return
 	}
 
@@ -169,18 +143,9 @@ func (g Galleries) Index(w http.ResponseWriter, r *http.Request) {
 
 // Handler for showing a gallery. Anyone with a link to a gallery will be able to view it as we'll not restrict access to this page like we have done with other gallery pages
 func (g Galleries) Show(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+
+	gallery, err := g.galleryByID(w, r)
 	if err != nil {
-		http.Error(w, "Invalid ID", http.StatusNotFound)
-		return
-	}
-	gallery, err := g.GalleryService.ByID(id)
-	if err != nil {
-		if errors.Is(err, models.ErrNotFound) {
-			http.Error(w, "Gallery not found", http.StatusNotFound)
-			return
-		}
-		http.Error(w, "Something went wrong", http.StatusInternalServerError)
 		return
 	}
 
@@ -203,4 +168,36 @@ func (g Galleries) Show(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: Render the gallery
 	g.Templates.Show.Execute(w, r, data)
+}
+
+// helper function to get the ID from the URL param, and then lookup the gallery.
+// returns the gallery and the error
+func (g Galleries) galleryByID(w http.ResponseWriter, r *http.Request) (*models.Gallery, error) {
+	// get the gallery id from the url query parameter
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusNotFound)
+		return nil, err
+	}
+	// query for the gallery with the valid id
+	gallery, err := g.GalleryService.ByID(id)
+	if err != nil {
+		if errors.Is(err, models.ErrNotFound) {
+			http.Error(w, "Gallery not found", http.StatusNotFound)
+			return nil, err
+		}
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		return nil, err
+	}
+	return gallery, nil
+}
+
+func userMustOwnGallery(w http.ResponseWriter, r *http.Request, gallery *models.Gallery) error {
+	user := context.User(r.Context())
+	if gallery.UserID != user.ID {
+		http.Error(w, "You are not authorized to edit this gallery", http.StatusForbidden)
+		return fmt.Errorf("user doesn't have access to this gallery")
+	}
+
+	return nil
 }
