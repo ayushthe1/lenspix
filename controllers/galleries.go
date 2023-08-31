@@ -60,13 +60,7 @@ func (g Galleries) Create(w http.ResponseWriter, r *http.Request) {
 // Method(handler) to render the page(form) to edit gallery
 func (g Galleries) Edit(w http.ResponseWriter, r *http.Request) {
 
-	gallery, err := g.galleryByID(w, r)
-	if err != nil {
-		return
-	}
-
-	// check if the user has the access to edit this gallery
-	err = userMustOwnGallery(w, r, gallery)
+	gallery, err := g.galleryByID(w, r, userMustOwnGallery)
 	if err != nil {
 		return
 	}
@@ -85,13 +79,7 @@ func (g Galleries) Edit(w http.ResponseWriter, r *http.Request) {
 // Method(handler) to process the edit gallery form (once the update button is clicked)
 func (g Galleries) Update(w http.ResponseWriter, r *http.Request) {
 
-	gallery, err := g.galleryByID(w, r)
-	if err != nil {
-		return
-	}
-
-	// check if the user has the access to edit this gallery
-	err = userMustOwnGallery(w, r, gallery)
+	gallery, err := g.galleryByID(w, r, userMustOwnGallery)
 	if err != nil {
 		return
 	}
@@ -170,9 +158,11 @@ func (g Galleries) Show(w http.ResponseWriter, r *http.Request) {
 	g.Templates.Show.Execute(w, r, data)
 }
 
+type galleryOpt func(http.ResponseWriter, *http.Request, *models.Gallery) error
+
 // helper function to get the ID from the URL param, and then lookup the gallery.
 // returns the gallery and the error
-func (g Galleries) galleryByID(w http.ResponseWriter, r *http.Request) (*models.Gallery, error) {
+func (g Galleries) galleryByID(w http.ResponseWriter, r *http.Request, opts ...galleryOpt) (*models.Gallery, error) {
 	// get the gallery id from the url query parameter
 	id, err := strconv.Atoi(chi.URLParam(r, "id"))
 	if err != nil {
@@ -189,6 +179,16 @@ func (g Galleries) galleryByID(w http.ResponseWriter, r *http.Request) (*models.
 		http.Error(w, "Something went wrong", http.StatusInternalServerError)
 		return nil, err
 	}
+
+	// for loop to iterate over all of our functional
+	// options, calling each and returning if there is an error.
+	for _, opt := range opts {
+		err = opt(w, r, gallery)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return gallery, nil
 }
 
