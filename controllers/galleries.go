@@ -129,6 +129,23 @@ func (g Galleries) Index(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// Handler function for deleting a gallery
+func (g Galleries) Delete(w http.ResponseWriter, r *http.Request) {
+	gallery, err := g.galleryByID(w, r, userMustOwnGallery)
+	if err != nil {
+		return
+	}
+
+	err = g.GalleryService.Delete(gallery.ID)
+	if err != nil {
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	// Redirect to the galleries page
+	http.Redirect(w, r, "/galleries", http.StatusFound)
+}
+
 // Handler for showing a gallery. Anyone with a link to a gallery will be able to view it as we'll not restrict access to this page like we have done with other gallery pages
 func (g Galleries) Show(w http.ResponseWriter, r *http.Request) {
 
