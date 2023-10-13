@@ -17,37 +17,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// func executeTemplate(w http.ResponseWriter, filepath string) {
-
-// 	htmlTpl, err := views.Parse(filepath)
-// 	if err != nil {
-// 		log.Println("An error occured while parsing the template")
-// 		http.Error(w, "Error parsing the template", http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	htmlTpl.Execute(w, nil)
-// }
-
-// func homeHandler(w http.ResponseWriter, r *http.Request) {
-// 	tplPath := filepath.Join("templates", "home.gohtml")
-// 	executeTemplate(w, tplPath)
-// }
-
-// type Router struct{}
-// func (router Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-// 	switch r.URL.Path {
-// 	case "/":
-// 		homeHandler(w, r)
-// 	case "/contact":
-// 		contactHandler(w, r)
-// 	default:
-// 		http.Error(w, "Page Not Found", http.StatusNotFound)
-// 		// w.WriteHeader(http.StatusNotFound)
-// 		// fmt.Fprintln(w, "Page not Found")
-// 	}
-// }
-
 type config struct {
 	PSQL models.PostgresConfig
 	SMTP models.SMTPConfig
@@ -199,16 +168,12 @@ func main() {
 	tpl := views.Must(views.ParseFS(templates.FS, "home.gohtml", "tailwind.gohtml"))
 
 	r.Get("/", controllers.StaticHandler(tpl))
-	// r.Get("/", http.HandlerFunc(homeHandler))
 
 	tpl = views.Must(views.ParseFS(templates.FS, "contact.gohtml", "tailwind.gohtml"))
 	r.Get("/contact", controllers.StaticHandler(tpl))
 
 	tpl = views.Must(views.ParseFS(templates.FS, "faq.gohtml", "tailwind.gohtml"))
 	r.Get("/faq", controllers.FAQ(tpl))
-
-	// tpl = views.Must(views.ParseFS(templates.FS, "signup.gohtml", "tailwind.gohtml"))
-	// r.Get("/signup", controllers.StaticHandler(tpl))
 
 	r.Get("/signup", userC.New)
 	r.Get("/signin", userC.SignIn)
@@ -220,7 +185,6 @@ func main() {
 	r.Get("/users/me", userC.CurrentUser)
 	r.Get("/reset-pw", userC.ResetPassword)
 	r.Post("/reset-pw", userC.ProcessResetPassword)
-	// r.Get("/users/me", userC.CurrentUser) --> before
 
 	// Apply the router to all routes that match the prefix 'users/me'
 	r.Route("/users/me", func(r chi.Router) {
@@ -257,8 +221,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// http.ListenAndServe(":3000", csrfMw(umw.SetUser(r)))
-	// In this code we are wrapping the router with the middleware that sets a user, then we wrap that whole http handler with the CSRF middleware. This means CSRF protection will run first, then our user lookup, and finally our router will decide what HTTP handler to use based on the path and HTTP method. The order of these can be important.
+
 }
 
 // timer middleware to know the response time for our requests
