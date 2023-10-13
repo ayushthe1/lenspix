@@ -1,2 +1,7 @@
 # Env variables
 .env
+
+# test-images dir
+images/
+
+main
