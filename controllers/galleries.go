@@ -192,6 +192,42 @@ func (g Galleries) Show(w http.ResponseWriter, r *http.Request) {
 	g.Templates.Show.Execute(w, r, data)
 }
 
+// handler function for showing image when requested. THis function takes in the gallery id and filename of the image from the url params to get the image
+func (g Galleries) Image(w http.ResponseWriter, r *http.Request) {
+
+	// get the gallery id and filename from the url params
+	filename := chi.URLParam(r, "filename")
+	galleryID, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusNotFound)
+		return
+	}
+	// get all the images from the gallery dir pointed to by galleryid
+	images, err := g.GalleryService.Images(galleryID)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	var requestedImage models.Image
+	imageFound := false
+	for _, image := range images {
+		if image.Filename == filename {
+			requestedImage = image
+			imageFound = true
+			break
+		}
+	}
+	if !imageFound {
+		http.Error(w, "Image not found", http.StatusNotFound)
+		return
+	}
+	// render the requested image
+	http.ServeFile(w, r, requestedImage.Path)
+
+}
+
 type galleryOpt func(http.ResponseWriter, *http.Request, *models.Gallery) error
 
 // helper function to get the ID from the URL param, and then lookup the gallery.

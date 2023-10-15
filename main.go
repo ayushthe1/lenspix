@@ -197,10 +197,12 @@ func main() {
 	})
 
 	r.Route("/galleries", func(r chi.Router) {
-		r.Get("/{id}", galleriesC.Show) // This route will be outside the Group because we don’t want it to require a user
+		// These routes will be outside the Group because we don’t want it to require a signed in user. Anyone with the link can access these paths.
+		r.Get("/{id}", galleriesC.Show)
+		r.Get("/{id}/images/{filename}", galleriesC.Image)
 		r.Group(func(r chi.Router) {
 			// This middleware will apply on these group of routes
-			r.Use(umw.RequireUser) // middleware to ensure only signed in user can access this page
+			r.Use(umw.RequireUser) // middleware to ensure only signed in user can access the below pages
 			r.Get("/new", galleriesC.New)
 			r.Get("/{id}/edit", galleriesC.Edit)
 			r.Post("/{id}", galleriesC.Update)

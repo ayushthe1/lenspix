@@ -130,6 +130,7 @@ func (service *GalleryService) Delete(id int) error {
 	return nil
 }
 
+// takes a gallery id and returns the path 'images/gallery-{id}'
 func (service *GalleryService) galleryDir(id int) string {
 	imagesDir := service.ImagesDir
 	if imagesDir == "" {
@@ -138,7 +139,7 @@ func (service *GalleryService) galleryDir(id int) string {
 	return filepath.Join(imagesDir, fmt.Sprintf("gallery-%d", id))
 }
 
-// service to get all the image files from a directory
+// service to get all the image files from a directory for a particular gallery id.
 func (service *GalleryService) Images(galleryID int) ([]Image, error) {
 	globPattern := filepath.Join(service.galleryDir(galleryID), "*") // images/gallery-2/*
 
