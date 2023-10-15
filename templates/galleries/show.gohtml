@@ -6,8 +6,8 @@
   <div class="grid grid-cols-4 gap-4 ">
     {{range .Images}}
     <div class="h-min w-full">
-      <a href="{{.}}">
-        <img class="w-full" src="{{.}}">
+      <a href="/galleries/{{.GalleryID}}/images/{{.Filename}}">
+        <img class="w-full" src="/galleries/{{.GalleryID}}/images/{{.Filename}}">
       </a>
     </div>
     {{end}}

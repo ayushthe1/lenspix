@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"fmt"
-	"math/rand"
 	"net/http"
 	"strconv"
 
@@ -154,24 +153,42 @@ func (g Galleries) Show(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	type Image struct {
+		GalleryID int
+		Filename  string
+	}
+
 	var data struct {
 		ID     int
 		Title  string
-		Images []string
+		Images []Image
 	}
 	data.ID = gallery.ID
 	data.Title = gallery.Title
 
-	for i := 0; i < 20; i++ {
-		// width and height are random values betwee 200 and 700
-		w, h := rand.Intn(500)+200, rand.Intn(500)+200
-		// using the width and height, we generate a URL
-		catImageURL := fmt.Sprintf("http://placekitten.com/%d/%d", w, h)
-		// Then we add the URL to our images.
-		data.Images = append(data.Images, catImageURL)
+	// for i := 0; i < 20; i++ {
+	// 	// width and height are random values betwee 200 and 700
+	// 	w, h := rand.Intn(500)+200, rand.Intn(500)+200
+	// 	// using the width and height, we generate a URL
+	// 	catImageURL := fmt.Sprintf("http://placekitten.com/%d/%d", w, h)
+	// 	// Then we add the URL to our images.
+	// 	data.Images = append(data.Images, catImageURL)
+	// }
+
+	images, err := g.GalleryService.Images(gallery.ID)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		return
 	}
 
-	// TODO: Render the gallery
+	for _, image := range images {
+		data.Images = append(data.Images, Image{
+			GalleryID: image.GalleryID,
+			Filename:  image.Filename,
+		})
+	}
+
 	g.Templates.Show.Execute(w, r, data)
 }
 
