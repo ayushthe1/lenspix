@@ -246,6 +246,34 @@ func (g Galleries) Image(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// handler function for deleting a image
+func (g Galleries) DeleteImage(w http.ResponseWriter, r *http.Request) {
+	gallery, err := g.galleryByID(w, r, userMustOwnGallery)
+	if err != nil {
+		return
+	}
+	// get the galleryId and filename to delete
+	filename := chi.URLParam(r, "filename") // url decoding will be automatically done
+	// galleryID, err := strconv.Atoi(chi.URLParam(r, "id")) // id should be a number
+	// if err != nil {
+	// 	http.Error(w, "Invalid ID", http.StatusNotFound)
+	// 	return
+	// }
+
+	// call the DeleteImage service
+	err = g.GalleryService.DeleteImage(gallery.ID, filename)
+	if err != nil {
+		fmt.Println(err)
+		http.Error(w, "error while deleting", http.StatusInternalServerError)
+		return
+	}
+
+	// everything went right so redirect to edit galleries page
+	editPath := fmt.Sprintf("/galleries/%d/edit", gallery.ID)
+	http.Redirect(w, r, editPath, http.StatusFound)
+
+}
+
 type galleryOpt func(http.ResponseWriter, *http.Request, *models.Gallery) error
 
 // helper function to get the ID from the URL param, and then lookup the gallery.
