@@ -184,6 +184,20 @@ func (service *GalleryService) Image(galleryID int, filename string) (Image, err
 	}, nil
 }
 
+// service to delete a single image
+func (service *GalleryService) DeleteImage(galleryID int, filename string) error {
+	image, err := service.Image(galleryID, filename)
+	if err != nil {
+		return fmt.Errorf("deleting image: %w", err)
+	}
+	// remove the file
+	err = os.Remove(image.Path)
+	if err != nil {
+		return fmt.Errorf("deleting image: %w", err)
+	}
+	return nil
+}
+
 // filter out the files based on some extension
 func hasExtension(file string, extensions []string) bool {
 	for _, ext := range extensions {
