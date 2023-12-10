@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -60,6 +61,7 @@ func (g Galleries) Create(w http.ResponseWriter, r *http.Request) {
 // Method(handler) to render the page(form) to edit gallery
 func (g Galleries) Edit(w http.ResponseWriter, r *http.Request) {
 
+	// passing userMustOwnGallery as an additional option to make sure that the gallery is owned by the user. This will check if gallery.UserID == user.ID from the context.
 	gallery, err := g.galleryByID(w, r, userMustOwnGallery)
 	if err != nil {
 		return
@@ -243,6 +245,32 @@ func (g Galleries) Image(w http.ResponseWriter, r *http.Request) {
 
 	// render the requested image
 	http.ServeFile(w, r, image.Path)
+
+}
+
+// handler function for uploading a image
+func (g Galleries) UploadImage(w http.ResponseWriter, r *http.Request) {
+	gallery, err := g.galleryByID(w, r, userMustOwnGallery)
+	if err != nil {
+		return
+	}
+	err = r.ParseMultipartForm(5 << 20) // 5mb
+	if err != nil {
+		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		return
+	}
+	fileHeaders := r.MultipartForm.File["images"]
+	for _, fileHeader := range fileHeaders {
+		file, err := fileHeader.Open()
+		if err != nil {
+			http.Error(w, "Something went wrong while opening file", http.StatusInternalServerError)
+			return
+		}
+		defer file.Close()
+		fmt.Printf("Attempting to upload %v for gallery %d.\n", fileHeader.Filename, gallery.ID)
+		io.Copy(w, file)
+		return
+	}
 
 }
 
