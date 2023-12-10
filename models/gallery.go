@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -182,6 +183,33 @@ func (service *GalleryService) Image(galleryID int, filename string) (Image, err
 		GalleryID: galleryID,
 		Path:      imagePath,
 	}, nil
+}
+
+// service for adding a image to gallery
+func (service *GalleryService) CreateImage(galleryID int, filename string, contents io.Reader) error {
+	galleryDir := service.galleryDir(galleryID)
+
+	// check if the gallery folder exists. If not ,then make it.
+	err := os.MkdirAll(galleryDir, 0755)
+	if err != nil {
+		return fmt.Errorf("creating gallery-%d images directory: %w", galleryID, err)
+	}
+	imagePath := filepath.Join(galleryDir, filename)
+	// create the file
+	dst, err := os.Create(imagePath)
+
+	if err != nil {
+		return fmt.Errorf("creating image file: %w", err)
+	}
+	// defer the file closing until end pf function
+	defer dst.Close()
+
+	// copy data from contents into the file
+	_, err = io.Copy(dst, contents)
+	if err != nil {
+		return fmt.Errorf("copying contents to image: %w", err)
+	}
+	return nil
 }
 
 // service to delete a single image
