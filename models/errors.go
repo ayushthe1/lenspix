@@ -14,6 +14,7 @@ var (
 	ErrNotFound   = errors.New("models: resource could not be found")
 )
 
+// custome error type which implements the error interface
 type FileError struct {
 	Issue string
 }
@@ -28,6 +29,7 @@ func checkContentType(r io.ReadSeeker, allowedTypes []string) error {
 	testBytes := make([]byte, 512)
 	_, err := r.Read(testBytes) // read the first 512 bytes
 	if err != nil {
+		// fmt.Errorf calls the .Error() method on err to obtain the string representation of the error.
 		return fmt.Errorf("checking content type: %w", err)
 	}
 

@@ -186,11 +186,25 @@ func (service *GalleryService) Image(galleryID int, filename string) (Image, err
 }
 
 // service for adding a image to gallery
-func (service *GalleryService) CreateImage(galleryID int, filename string, contents io.Reader) error {
+func (service *GalleryService) CreateImage(galleryID int, filename string, contents io.ReadSeeker) error {
+	// io.ReadSeeker as argument as we need to pass it to checkcontenttype func
+
+	// check if the content type is valid
+	err := checkContentType(contents, service.imageContentTypes())
+	if err != nil {
+		return fmt.Errorf("creating image %v: %w", filename, err)
+	}
+
+	// check if the file extension is valid
+	err = checkExtension(filename, service.extensions())
+	if err != nil {
+		return fmt.Errorf("creating image ,has invalid extension %v: %w", filename, err)
+	}
+
 	galleryDir := service.galleryDir(galleryID)
 
 	// check if the gallery folder exists. If not ,then make it.
-	err := os.MkdirAll(galleryDir, 0755)
+	err = os.MkdirAll(galleryDir, 0755)
 	if err != nil {
 		return fmt.Errorf("creating gallery-%d images directory: %w", galleryID, err)
 	}
@@ -224,6 +238,14 @@ func (service *GalleryService) DeleteImage(galleryID int, filename string) error
 		return fmt.Errorf("deleting image: %w", err)
 	}
 	return nil
+}
+
+func (service *GalleryService) extensions() []string {
+	return []string{".png", ".jpg", ".jpeg", ".gif"}
+}
+
+func (service *GalleryService) imageContentTypes() []string {
+	return []string{"image/png", "image/jpeg", "image/gif"}
 }
 
 // filter out the files based on some extension
