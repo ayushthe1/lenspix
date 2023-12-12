@@ -19,13 +19,14 @@ func Open(config PostgresConfig) (*sql.DB, error) {
 	return db, nil
 }
 
+// Not used anymore. The configs are loaded from the env variables
 func DefaultPostgresConfig() PostgresConfig {
 	return PostgresConfig{
 		Host:     "localhost",
 		Port:     "5432",
-		User:     "baloo",
-		Password: "junglebook",
-		Database: "lenspix",
+		User:     "user",
+		Password: "password",
+		Database: "database",
 		SSLMode:  "disable",
 	}
 }

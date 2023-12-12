@@ -108,7 +108,8 @@ func (u Users) ProcessSignIn(w http.ResponseWriter, r *http.Request) {
 	user, err := u.UserService.Authenticate(data.Email, data.Password)
 	if err != nil {
 		fmt.Println(err)
-		http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		// http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		http.Redirect(w, r, "/signin", http.StatusFound)
 		return
 	}
 	log.Printf("User authenticated: %+v", user)
