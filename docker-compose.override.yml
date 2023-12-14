@@ -1,0 +1,16 @@
+# dev override file
+version: "3.9"
+
+services:
+  # Postgres database
+  db:
+    ports: # Expose ports so that apps not running via docker compose can connect to them.
+      - 5432:5432 # format here is "port on our machine":"port on container"
+
+  adminer:
+    image: adminer
+    restart: always
+    environment:
+      ADMINER_DESIGN: dracula 
+    ports:
+      - 3333:8080
