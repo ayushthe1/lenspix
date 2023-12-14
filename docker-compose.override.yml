@@ -14,3 +14,17 @@ services:
       ADMINER_DESIGN: dracula 
     ports:
       - 3333:8080
+  
+  tailwind:
+    build:
+    # use the dockerfile located in tailwind dir for building the service
+      context: ./tailwind
+      dockerfile: Dockerfile
+    tty: true
+    restart: always
+    # the use of volumes in the Docker Compose file allows changes made on our local machine to be reflected inside the container without rebuilding the images.
+    # mounts local directories into the container. Thsi is bi-directional. So any changes inside local computer or container will synchronize.
+    volumes:
+    - ./tailwind:/src
+    - ./assets:/dst
+    - ./templates:/templates
