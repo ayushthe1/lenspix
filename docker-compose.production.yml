@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  server:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    restart: always
+    volumes:
+      - ./images:/app/images
+    ports: # for testing only
+      - 3000:3000
+    depends_on:
+      - db
