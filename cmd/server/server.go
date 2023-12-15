@@ -67,10 +67,23 @@ func loadEnvConfig() (config, error) {
 }
 
 func main() {
-
 	cfg, err := loadEnvConfig()
 	if err != nil {
 		panic(err)
+	}
+
+	err = run(cfg)
+	if err != nil {
+		panic(err)
+	}
+
+}
+
+func run(cfg config) error {
+
+	cfg, err := loadEnvConfig()
+	if err != nil {
+		return err
 	}
 
 	// Setup the database connection
@@ -85,7 +98,7 @@ func main() {
 	err = models.MigrateFS(db, migrations.FS, ".")
 	// our fs.go file is inside the migration folder. So all the files are going to be relative to that. That's why we pass "." which means current directory w.r.t to the fs.go file.
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	// Setup services
@@ -223,6 +236,7 @@ func main() {
 	})
 
 	assetsHandler := http.FileServer(http.Dir("assets"))
+	// HTTP FileServer looks for a file using the entire URL Path. So it needs to be trimmed
 	r.Get("/assets/*", http.StripPrefix("/assets", assetsHandler).ServeHTTP)
 
 	r.NotFound(func(w http.ResponseWriter, r *http.Request) {
@@ -233,8 +247,10 @@ func main() {
 	fmt.Printf("Starting the server on port :%s ......", cfg.Server.Address)
 	err = http.ListenAndServe(cfg.Server.Address, r)
 	if err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 
 }
 
