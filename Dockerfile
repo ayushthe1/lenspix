@@ -5,4 +5,4 @@ RUN go mod download
 COPY . .
 RUN go build -v -o ./server ./cmd/server/
 # run the binary
-CMD ./server iol
+CMD ./server
