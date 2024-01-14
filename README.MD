@@ -34,7 +34,7 @@ LensPix is a photo gallery web application built with Go. It allows users to sig
 3. Build and run the application: `make run`
 4. Open your browser and visit [http://localhost:3000](http://localhost:3000)
 
-
+> **Note** : The project will soon be deployed online on a cloud provider
 
 ## Contributing
 
