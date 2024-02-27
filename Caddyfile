@@ -1,0 +1,4 @@
+:80 # Any web request that come to port 80 on Caddy is going to be reverse proxied to server:3000
+
+reverse_proxy server:3000
+

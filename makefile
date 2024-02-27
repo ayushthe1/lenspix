@@ -1,7 +1,7 @@
 ## run the app
 
 run:
-	docker compose down
+	docker-compose -p lenspix down
 	@echo "Deploying app on docker ...."
 	docker compose  -f docker-compose.yml  -f docker-compose.production.yml up --build
 
