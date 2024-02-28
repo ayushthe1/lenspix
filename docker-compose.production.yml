@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     volumes:
-      - ./images:/app/images
+      - ~/data/lenspix.com/images:/app/images 
     # ports: # for testing only
     #   - 3000:3000
     depends_on:
@@ -21,3 +21,12 @@ services:
       - 443:443
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
+
+  db:
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: ${PSQL_USER} 
+      POSTGRES_PASSWORD: ${PSQL_PASSWORD}
+      POSTGRES_DB: ${PSQL_DATABASE}
+    volumes:
+      - ~/data/lenspix.com/psql:/var/lib/postgresql/data/pgdata

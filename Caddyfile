@@ -1,4 +1,5 @@
-:80 # Any web request that come to port 80 on Caddy is going to be reverse proxied to server:3000
+# :80 # Any web request that come to port 80 on Caddy is going to be reverse proxied to server:3000
+lenspix.ayushsharma.co.in
 
 reverse_proxy server:3000
 
