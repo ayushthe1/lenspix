@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     volumes:
-      - ~/data/lenspix.com/images:/images 
+      - $HOME/data/lenspix.com/images:/images 
     # ports: # for testing only
     #   - 3000:3000
     depends_on:
