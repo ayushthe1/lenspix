@@ -7,3 +7,5 @@ images/*
 main
 
 node_modules/
+
+lenspix-1-keyPair.pem
