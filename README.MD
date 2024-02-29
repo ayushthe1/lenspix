@@ -2,6 +2,9 @@
 
 LensPix is a photo gallery web application built with Go. It allows users to sign up and create their photo galleries. The project focuses on user authentication, csrf protection, and seamless deployment using Docker and Make commands. This site is hosted on AWS but users can also deploy it locally by following the below instructions.
 
+ **Live Link** : https://lenspix.ayushsharma.co.in
+
+
 ## Features
 
 - User Authentication: Sign up, log in, and create photo galleries.
@@ -34,7 +37,6 @@ LensPix is a photo gallery web application built with Go. It allows users to sig
 3. Build and run the application: `make run`
 4. Open your browser and visit [http://localhost:3000](http://localhost:3000)
 
-> **Note** : The project will soon be deployed online on a cloud provider
 
 ## Contributing
 
