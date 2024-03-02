@@ -16,7 +16,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     volumes:
-      - /home/ubuntu/data/lenspix.com/images:/images 
+      - $HOME/data/lenspix.com/images:/images 
     # ports: # for testing only
     #   - 3000:3000
     depends_on:
@@ -40,5 +40,5 @@ services:
       POSTGRES_PASSWORD: ${PSQL_PASSWORD}
       POSTGRES_DB: ${PSQL_DATABASE}
     volumes:
-      - /home/ubuntu/data/lenspix.com/psql:/var/lib/postgresql/data/pgdata
+      - $HOME/data/lenspix.com/psql:/var/lib/postgresql/data/pgdata
     logging: *highlight-logging

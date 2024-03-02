@@ -1,5 +1,7 @@
-# :80 # Any web request that come to port 80 on Caddy is going to be reverse proxied to server:3000
-lenspixx.ayushsharma.co.in
+# Any web request that come to port 80 locally or on your deployed url on Caddy is going to be reverse proxied to server:3000
 
+# Remove the port number and put your url when the app is deployed online
+# lenspixx.ayushsharma.co.in 
+:80
 reverse_proxy server:3000
 

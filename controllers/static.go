@@ -21,8 +21,8 @@ func FAQ(tpl Template) http.HandlerFunc {
 			Answer: "Yes! We have a free trial offer",
 		},
 		{
-			Question: "What is your name ?",
-			Answer:   "My name is Ayush",
+			Question: "What is the tech Stack of this project",
+			Answer:   "Its written in Golang",
 		},
 	}
 

@@ -13,7 +13,7 @@ LensPix is a photo gallery web application built with Go. It allows users to sig
 - Database: Stores data in PostgreSQL for robust data management.
 - Webpage Design: Uses Go HTML library and Tailwind CSS for a responsive UI.
 - Session Tokens: Simplifies user sign-in with session tokens.
-- Easy Deployment: Deploy LensPix effortlessly using Docker, with a multistage Docker build for efficiency. Hosted live on AWS ,users can setup locally also.
+- Easy Deployment: Deploy LensPix effortlessly using Docker locally, with a multistage Docker build for efficiency. Hosted live on AWS ,users can setup locally also.
 - Schema Migrations: Utilizes Goose for database schema migrations.
 
 ## Libraries Used
